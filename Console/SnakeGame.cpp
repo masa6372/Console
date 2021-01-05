@@ -1,11 +1,4 @@
-﻿//----------------------------------------------------------------------
-//			snake ver 0.001
-//			Copyright (C) 2014 by N.Tsuda
-//			Description: 
-//			License: CDDL 1.0 (http://opensource.org/licenses/CDDL-1.0)
-//----------------------------------------------------------------------
-
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 #include <vector>
 #include <deque>
@@ -20,10 +13,12 @@ typedef pair<int, int> CurPos;			//	座標値タイプ定義
 #define		CONS_WD		80
 #define		CONS_HT		25
 #define		POINT_FOOD		100		//	餌を食べたポイント
+#define		POINT_SPFOOD	500		//	特別な餌を食べたときのポイント
 #define		EXT_FOOD			5			//	餌を食べると伸びる胴体長
 #define		POINT_TIME		10			//	一定時間毎のポイント
 #define		TERM				10			//	一定期間
 #define		N_FOOD			10			//	初期餌数
+#define		SP_FOOD			1
 
 //----------------------------------------------------------------------
 //		色定義
@@ -47,7 +42,7 @@ typedef pair<int, int> CurPos;			//	座標値タイプ定義
 #define		COL_RED_MASK		0x04
 #define		COL_GREEN_MASK	0x02
 #define		COL_BLUE_MASK	0x01
-int flag = 0;
+int flag = 0; //蛇の色を変化させるフラグ
 
 //	文字色指定 for Windows Console
 void setColor(int col)
@@ -110,6 +105,22 @@ void add_foods(vector<CurPos>& foods, int cnt)
 		foods.push_back(CurPos(x, y));
 	}
 }
+
+void add_spfoods(vector<CurPos>& spfoods, int cnt) {
+	for (int i = 0; i < cnt; i++) {
+		int x = rand() % (CONS_WD - 2) + 1;
+		int y = rand() % (CONS_HT - 4) + 2;
+		spfoods.push_back(CurPos(x, y));
+	}
+}
+
+void print_spfoods(const vector<CurPos>& spfoods) {
+	setColor(COL_RED);
+	for (uint i = 0; i < spfoods.size(); i++) {
+		setCursorPos(spfoods[i].first, spfoods[i].second);
+		cout << "$";
+	}
+}
 //	餌を画面に表示
 void print_foods(const vector<CurPos>& foods)
 {
@@ -119,6 +130,7 @@ void print_foods(const vector<CurPos>& foods)
 		cout << "$";
 	}
 }
+
 //	(x, y)：スネークの頭位置
 //	return: 餌を食べた場合は true を返す
 bool check_foods(vector<CurPos>& foods, int x, int y)
@@ -132,6 +144,18 @@ bool check_foods(vector<CurPos>& foods, int x, int y)
 	}
 	return false;
 }
+bool check_spoods(vector<CurPos>& spfoods, int x, int y)
+{
+	for (uint i = 0; i < spfoods.size(); ++i) {
+		if (spfoods[i].first == x && spfoods[i].second == y) {
+			spfoods.erase(spfoods.begin() + i);		//	要素を削除
+			return true;
+		}
+	}
+	return false;
+}
+
+
 void print_field()
 {
 	setColor(COL_BLUE,COL_BLUE);
@@ -237,9 +261,12 @@ int main()
 		snake.push_front(CurPos(x, y - 1));
 		snake.push_front(CurPos(x, y));
 		vector<CurPos> foods;		//	フード位置配列
+		vector<CurPos> spfoods;
 		add_foods(foods, N_FOOD);				//	フードを追加
+		add_spfoods(spfoods, SP_FOOD);
 		print_field();
 		print_foods(foods);
+		print_spfoods(spfoods);
 		print_snake(snake);
 		print_score(score, snake.size());
 		int eating = 0;		//	餌を食べたフラグ
@@ -278,7 +305,14 @@ int main()
 				eating = EXT_FOOD;			//	餌を食べると胴体が伸びる
 				score += POINT_FOOD;
 			}
+			if (check_spoods(spfoods, x, y)) {
+				cout << (char)0x07;
+				eating = EXT_FOOD;
+				score += POINT_SPFOOD;
+				add_spfoods(spfoods, 1);	//	特別な餌を食べるたびに一つ増やす
+			}
 			print_foods(foods);
+			print_spfoods(spfoods);
 			print_snake(snake);
 			print_score(score, snake.size());
 			if (collapsed(snake)) {
