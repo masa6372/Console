@@ -114,6 +114,16 @@ void add_spfoods(vector<CurPos>& spfoods, int cnt) {
 	}
 }
 
+void add_poo(deque<CurPos>& snake, vector<CurPos>& poo){
+	int posx = snake.back().first;
+	int posy = snake.back().second;
+	snake.pop_back();
+	setCursorPos(posx, posy);
+	poo.push_back(CurPos(posx, posy));
+	setColor(COL_DARK_RED);
+	cout << "&";
+}
+
 void print_spfoods(const vector<CurPos>& spfoods) {
 	setColor(COL_RED);
 	for (uint i = 0; i < spfoods.size(); i++) {
@@ -154,6 +164,15 @@ bool check_spoods(vector<CurPos>& spfoods, int x, int y)
 	}
 	return false;
 }
+
+bool check_poo(vector<CurPos>& poo, int x, int y) {
+	for (uint i = 0; i < poo.size(); i++) {
+		if (poo[i].first == x && poo[i].second == y) {
+			return true;
+		}
+	}
+	return false;
+} 
 
 
 void print_field()
@@ -262,6 +281,7 @@ int main()
 		snake.push_front(CurPos(x, y));
 		vector<CurPos> foods;		//	フード位置配列
 		vector<CurPos> spfoods;
+		vector<CurPos> poo;
 		add_foods(foods, N_FOOD);				//	フードを追加
 		add_spfoods(spfoods, SP_FOOD);
 		print_field();
@@ -294,6 +314,7 @@ int main()
 			if (extend) {
 				score += POINT_TIME;		//	一定期間毎にポイント追加
 				add_foods(foods, 1);			//	餌を一個追加
+				add_poo(snake, poo);
 			}
 			if (eating) {
 				--eating;
@@ -310,6 +331,10 @@ int main()
 				eating = EXT_FOOD;
 				score += POINT_SPFOOD;
 				add_spfoods(spfoods, 1);	//	特別な餌を食べるたびに一つ増やす
+			}
+			if (check_poo(poo, x, y)) {
+				cout << (char)0x07 << (char)0x07 << (char)0x07;		//	ビープ音*３
+				break;
 			}
 			print_foods(foods);
 			print_spfoods(spfoods);
